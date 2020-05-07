@@ -1,7 +1,10 @@
 var express = require('express')
 const bcrypt = require('bcrypt');
+var jwt = require('jsonwebtoken');
+require('dotenv').config()
+
 var router = express.Router()
-const {registerValidation} = require('../validation')
+const {registerValidation, loginValidation} = require('../validation')
 
 // IMPORT SCHEMAS
  const User = require('../model/User')
@@ -34,14 +37,34 @@ router.post('/register', async (req,res) => {
 
   try{
     const savedUser = await user.save()
-    res.send(savedUser)
+    res.send({user: user._id})
   } catch(err){
     res.status(400).send(err)
   }
    
 })
 
-router.post('/login', (req,res) => {
+router.post('/login', async (req,res) => {
+
+  // WE NEED TO VALIDATE THE DATA FROM USER
+  const {error} = loginValidation(req.body)
+  if(error) return res.status(400).send(error.details[0].message)
+
+  // CHECK IF THE USER IS ALREADY EXISTS
+  const user = await User.findOne({email: req.body.email});
+  console.log(user);
+  if (!user) return res.status(400).send('EMAIL IS NOT FOUND')
+
+  // PASSWORD IS CORRECT
+  const validPass = await bcrypt.compare(req.body.password, user.password)
+  if(!validPass) return res.status(400).send('Invalid password')
+
+
+  //CREATE AND ASSIGN A NEW TOKEN
+  const token = jwt.sign({_id: req.body.id}, process.env.SECRET_TOKEN)
+  res.header('auth-token', token).send(token)
+
+
   res.send('login page')
 })
 

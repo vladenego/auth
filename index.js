@@ -9,6 +9,7 @@ require('dotenv').config()
 
 // IMPORT ROUTE
   const authRoute = require('./routes/auth')
+  const postRoute = require('./routes/posts')
 
 // CONNECTION TO DATABASE
   const dbPath = process.env.DB_CONNECTION;
@@ -30,5 +31,6 @@ app.use(express.json())
 
 // ROUTE MIDDLEWARE
 app.use('/api/user', authRoute)
+app.use('/posts', postRoute)
 
 app.listen(port)
